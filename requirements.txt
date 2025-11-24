@@ -1,0 +1,5 @@
+python-telegram-bot==20.4
+APScheduler==3.10.1
+reportlab==4.0.0
+matplotlib==3.8.1
+pillow==10.0.1
