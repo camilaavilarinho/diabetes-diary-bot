@@ -2,6 +2,7 @@ import os
 import sqlite3
 from datetime import datetime, date, timedelta
 from dotenv import load_dotenv
+import os
 
 from telegram import Update
 from telegram.ext import (
@@ -10,15 +11,18 @@ from telegram.ext import (
 
 # Load environment variables from .env file
 load_dotenv()
+BOT_TOKEN = os.environ.get("BOT_TOKEN")
+if not BOT_TOKEN:
+    raise RuntimeError("Set BOT_TOKEN env var")
 
 # =========================
 #  DATABASE
 # =========================
 
-DB_FILE = "test_diary.db"
+DB_PATH = os.environ.get("DB_PATH", "/data/diary.db")
 
 def init_db():
-    conn = sqlite3.connect(DB_FILE)
+    conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
 
     c.execute("""
@@ -47,7 +51,7 @@ def init_db():
     conn.close()
 
 def save_entry(chat_id, entry_date, meal, field, value):
-    conn = sqlite3.connect(DB_FILE)
+    conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute("""
       INSERT INTO entries (chat_id, entry_date, meal, field, value, created_at)
@@ -57,7 +61,7 @@ def save_entry(chat_id, entry_date, meal, field, value):
     conn.close()
 
 def save_note(chat_id, entry_date, text):
-    conn = sqlite3.connect(DB_FILE)
+    conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute("""
       INSERT INTO notes (chat_id, entry_date, note, created_at)
@@ -67,7 +71,7 @@ def save_note(chat_id, entry_date, text):
     conn.close()
 
 def get_entries(chat_id, start_date, end_date):
-    conn = sqlite3.connect(DB_FILE)
+    conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
 
     c.execute("""
@@ -83,7 +87,7 @@ def get_entries(chat_id, start_date, end_date):
     return rows
 
 def get_notes(chat_id, start_date, end_date):
-    conn = sqlite3.connect(DB_FILE)
+    conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
 
     c.execute("""
