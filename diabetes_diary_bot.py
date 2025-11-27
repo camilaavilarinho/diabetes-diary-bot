@@ -159,7 +159,14 @@ def generate_pdf(chat_id, start_date, end_date, file_path):
     MEALS = ["breakfast", "lunch", "dinner"]
 
     for day in sorted(data.keys()):
-        row = [Paragraph(day, styles['Normal'])]
+        # Convert date from YYYY-MM-DD to DD-MM-YYYY format
+        try:
+            date_obj = datetime.strptime(day, "%Y-%m-%d")
+            formatted_date = date_obj.strftime("%d-%m-%Y")
+        except:
+            formatted_date = day
+
+        row = [Paragraph(formatted_date, styles['Normal'])]
 
         for meal in MEALS:
             m = data[day].get(meal, {})
