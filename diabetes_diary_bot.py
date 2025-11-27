@@ -133,14 +133,14 @@ def generate_pdf(chat_id, start_date, end_date, file_path):
 
     styles = getSampleStyleSheet()
 
-    # Set up PDF with proper margins
+    # Set up PDF with minimal margins
     pdf = SimpleDocTemplate(
         file_path,
         pagesize=A4,
-        leftMargin=20,
-        rightMargin=20,
-        topMargin=30,
-        bottomMargin=30
+        leftMargin=10,
+        rightMargin=10,
+        topMargin=20,
+        bottomMargin=20
     )
     elements = []
 
@@ -185,9 +185,9 @@ def generate_pdf(chat_id, start_date, end_date, file_path):
 
         table_data.append(row)
 
-    # Define column widths: Date, 5 meals, Basal, Notes
-    # Total width for A4 with margins ~555 points
-    col_widths = [45, 65, 65, 65, 65, 65, 50, 135]  # Added basal column
+    # Define column widths: Date, 3 meals, Basal, Notes
+    # A4 width = 595 points, with 20 total margin = 575 points available
+    col_widths = [45, 80, 80, 80, 50, 240]  
 
     table = Table(table_data, colWidths=col_widths, repeatRows=1)
     table.setStyle(TableStyle([
