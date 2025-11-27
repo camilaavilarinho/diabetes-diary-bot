@@ -87,11 +87,11 @@ def get_notes(chat_id, start_date, end_date):
     c = conn.cursor()
 
     c.execute("""
-      SELECT entry_date, note
+      SELECT entry_date, note, created_at
       FROM notes
       WHERE chat_id = ?
       AND entry_date BETWEEN ? AND ?
-      ORDER BY entry_date
+      ORDER BY created_at
     """, (chat_id, start_date, end_date))
 
     rows = c.fetchall()
@@ -120,10 +120,16 @@ def generate_pdf(chat_id, start_date, end_date, file_path):
         data[d].setdefault(meal, {})
         data[d][meal][field] = value
 
-    for d, note in notes:
+    for d, note, created_at in notes:
         data.setdefault(d, {})
         data[d].setdefault("notes", [])
-        data[d]["notes"].append(note)
+        # Format timestamp to show only time (HH:MM)
+        try:
+            timestamp = datetime.fromisoformat(created_at).strftime("%H:%M")
+            note_with_time = f"[{timestamp}] {note}"
+        except:
+            note_with_time = note
+        data[d]["notes"].append(note_with_time)
 
     styles = getSampleStyleSheet()
 
