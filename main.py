@@ -1,8 +1,8 @@
 import os
-import sqlite3
 from datetime import datetime, date, timedelta
 from dotenv import load_dotenv
-import os
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
 from telegram import Update
 from telegram.ext import (
@@ -19,86 +19,97 @@ if not BOT_TOKEN:
 #  DATABASE
 # =========================
 
-DB_PATH = os.environ.get("DB_PATH", "/data/diary.db")
+DATABASE_URL = os.environ.get("DATABASE_URL")
+if not DATABASE_URL:
+    raise RuntimeError("Set DATABASE_URL env var with your Neon PostgreSQL connection string")
+
+def get_db_connection():
+    """Create a new database connection"""
+    return psycopg2.connect(DATABASE_URL)
 
 def init_db():
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     c = conn.cursor()
 
     c.execute("""
     CREATE TABLE IF NOT EXISTS entries (
-        id INTEGER PRIMARY KEY,
-        chat_id INTEGER,
-        entry_date TEXT,
+        id SERIAL PRIMARY KEY,
+        chat_id BIGINT,
+        entry_date DATE,
         meal TEXT,
         field TEXT,
         value TEXT,
-        created_at TEXT
+        created_at TIMESTAMP
     )
     """)
 
     c.execute("""
     CREATE TABLE IF NOT EXISTS notes (
-        id INTEGER PRIMARY KEY,
-        chat_id INTEGER,
-        entry_date TEXT,
+        id SERIAL PRIMARY KEY,
+        chat_id BIGINT,
+        entry_date DATE,
         note TEXT,
-        created_at TEXT
+        created_at TIMESTAMP
     )
     """)
 
     conn.commit()
+    c.close()
     conn.close()
 
 def save_entry(chat_id, entry_date, meal, field, value):
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("""
       INSERT INTO entries (chat_id, entry_date, meal, field, value, created_at)
-      VALUES (?, ?, ?, ?, ?, ?)
-    """, (chat_id, entry_date, meal, field, value, datetime.now().isoformat()))
+      VALUES (%s, %s, %s, %s, %s, %s)
+    """, (chat_id, entry_date, meal, field, value, datetime.now()))
     conn.commit()
+    c.close()
     conn.close()
 
 def save_note(chat_id, entry_date, text):
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("""
       INSERT INTO notes (chat_id, entry_date, note, created_at)
-      VALUES (?, ?, ?, ?)
-    """, (chat_id, entry_date, text, datetime.now().isoformat()))
+      VALUES (%s, %s, %s, %s)
+    """, (chat_id, entry_date, text, datetime.now()))
     conn.commit()
+    c.close()
     conn.close()
 
 def get_entries(chat_id, start_date, end_date):
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     c = conn.cursor()
 
     c.execute("""
       SELECT entry_date, meal, field, value
       FROM entries
-      WHERE chat_id = ?
-      AND entry_date BETWEEN ? AND ?
+      WHERE chat_id = %s
+      AND entry_date BETWEEN %s AND %s
       ORDER BY entry_date
     """, (chat_id, start_date, end_date))
 
     rows = c.fetchall()
+    c.close()
     conn.close()
     return rows
 
 def get_notes(chat_id, start_date, end_date):
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db_connection()
     c = conn.cursor()
 
     c.execute("""
       SELECT entry_date, note, created_at
       FROM notes
-      WHERE chat_id = ?
-      AND entry_date BETWEEN ? AND ?
+      WHERE chat_id = %s
+      AND entry_date BETWEEN %s AND %s
       ORDER BY created_at
     """, (chat_id, start_date, end_date))
 
     rows = c.fetchall()
+    c.close()
     conn.close()
     return rows
 
