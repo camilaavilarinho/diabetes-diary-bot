@@ -131,20 +131,27 @@ def generate_pdf(chat_id, start_date, end_date, file_path):
     data = {}
 
     for d, meal, field, value in entries:
-        data.setdefault(d, {})
-        data[d].setdefault(meal, {})
-        data[d][meal][field] = value
+        # Convert date object to string if needed
+        date_key = d.isoformat() if isinstance(d, date) else str(d)
+        data.setdefault(date_key, {})
+        data[date_key].setdefault(meal, {})
+        data[date_key][meal][field] = value
 
     for d, note, created_at in notes:
-        data.setdefault(d, {})
-        data[d].setdefault("notes", [])
+        # Convert date object to string if needed
+        date_key = d.isoformat() if isinstance(d, date) else str(d)
+        data.setdefault(date_key, {})
+        data[date_key].setdefault("notes", [])
         # Format timestamp to show only time (HH:MM)
         try:
-            timestamp = datetime.fromisoformat(created_at).strftime("%H:%M")
+            if isinstance(created_at, datetime):
+                timestamp = created_at.strftime("%H:%M")
+            else:
+                timestamp = datetime.fromisoformat(str(created_at)).strftime("%H:%M")
             note_with_time = f"[{timestamp}] {note}"
         except:
             note_with_time = note
-        data[d]["notes"].append(note_with_time)
+        data[date_key]["notes"].append(note_with_time)
 
     styles = getSampleStyleSheet()
 
@@ -176,10 +183,14 @@ def generate_pdf(chat_id, start_date, end_date, file_path):
     for day in sorted(data.keys()):
         # Convert date from YYYY-MM-DD to DD-MM-YYYY format
         try:
-            date_obj = datetime.strptime(day, "%Y-%m-%d")
+            # Handle both string and date objects
+            if isinstance(day, str):
+                date_obj = datetime.strptime(day, "%Y-%m-%d")
+            else:
+                date_obj = day
             formatted_date = date_obj.strftime("%d-%m-%Y")
         except:
-            formatted_date = day
+            formatted_date = str(day)
 
         row = [Paragraph(formatted_date, styles['Normal'])]
 
