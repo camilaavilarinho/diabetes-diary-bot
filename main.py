@@ -381,7 +381,9 @@ def main():
     app.add_handler(CommandHandler("note", note))
     app.add_handler(CommandHandler("report", report))
 
-    app.run_polling()
+    app.run_polling(
+        drop_pending_updates=True
+    )
 
 if __name__ == "__main__":
     main()
